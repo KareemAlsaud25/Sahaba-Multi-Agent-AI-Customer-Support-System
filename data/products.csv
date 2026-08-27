@@ -1,0 +1,51 @@
+product_id,product_name,category,price,stock,rating,description
+P001,TechBook Pro,Laptop,850,45,3.9,15-inch laptop with 16GB RAM and 512GB SSD
+P002,TechBook Air,Laptop,650,52,4.1,14-inch lightweight laptop with 8GB RAM and 256GB SSD
+P003,WorkMate 15,Laptop,720,19,4.0,15.6-inch laptop with 16GB RAM and 512GB SSD
+P004,StudentBook 14,Laptop,520,11,4.5,14-inch laptop with 8GB RAM and 256GB SSD
+P005,Creator Pro 16,Laptop,1250,39,3.9,16-inch laptop with 32GB RAM and 1TB SSD
+P006,OfficeBook 13,Laptop,590,32,3.8,13.3-inch laptop with 8GB RAM and 256GB SSD
+P007,UltraBook X,Laptop,980,10,4.0,14-inch laptop with 16GB RAM and 1TB SSD
+P008,GamingBook G1,Laptop,1450,37,4.5,15.6-inch gaming laptop with 32GB RAM and 1TB SSD
+P009,TravelBook 12,Laptop,480,40,4.0,12.5-inch compact laptop with 8GB RAM and 256GB SSD
+P010,BusinessBook 15,Laptop,890,46,4.6,15-inch business laptop with 16GB RAM and 512GB SSD
+P011,SmartPhone X,Smartphone,500,31,4.0,6.5-inch smartphone with 128GB storage
+P012,SmartPhone Lite,Smartphone,300,42,4.1,6.1-inch smartphone with 64GB storage
+P013,SmartPhone Pro,Smartphone,750,60,3.8,6.7-inch smartphone with 256GB storage
+P014,SmartPhone Mini,Smartphone,420,56,4.0,6.1-inch smartphone with 128GB storage
+P015,SmartPhone Max,Smartphone,680,32,4.2,6.8-inch smartphone with 256GB storage
+P016,SmartPhone A1,Smartphone,250,14,4.0,6.2-inch smartphone with 64GB storage
+P017,SmartPhone A2,Smartphone,340,53,4.2,6.4-inch smartphone with 128GB storage
+P018,SmartPhone Z,Smartphone,590,10,4.2,6.6-inch smartphone with 256GB storage
+P019,SmartPhone Pro Max,Smartphone,900,27,4.7,6.8-inch premium smartphone with 512GB storage
+P020,SmartPhone Note,Smartphone,460,43,4.1,6.5-inch smartphone with 128GB storage
+P021,Wireless Buds,Audio,80,7,4.6,Wireless earbuds with charging case
+P022,NoiseCancel Headphones,Audio,150,39,3.9,Over-ear headphones with active noise cancellation
+P023,Sport Buds,Audio,65,29,3.9,Water-resistant wireless earbuds
+P024,Studio Headphones,Audio,180,23,4.7,Over-ear headphones designed for studio listening
+P025,Mini Speaker,Audio,55,44,4.8,Portable Bluetooth speaker
+P026,Home Speaker,Audio,120,28,4.4,Smart wireless speaker for home use
+P027,Travel Headphones,Audio,95,50,3.9,Foldable wireless headphones
+P028,Gaming Headset,Audio,110,47,4.1,Gaming headset with microphone
+P029,Kids Headphones,Audio,45,23,4.9,Volume-limited wireless headphones
+P030,Bass Speaker,Audio,140,59,4.1,Portable speaker with enhanced bass
+P031,USB-C Charger,Accessories,35,11,4.2,65W USB-C fast charger
+P032,Power Bank 20K,Accessories,50,34,4.5,"20,000mAh portable power bank"
+P033,Laptop Stand,Accessories,40,28,4.0,Adjustable aluminum laptop stand
+P034,Wireless Mouse,Accessories,25,27,4.0,Ergonomic wireless mouse
+P035,Mechanical Keyboard,Accessories,90,22,4.6,Compact mechanical keyboard
+P036,USB-C Hub,Accessories,45,48,4.5,Multi-port USB-C hub with HDMI
+P037,Webcam HD,Accessories,60,43,4.5,1080p USB webcam
+P038,Phone Stand,Accessories,18,39,4.6,Adjustable desktop phone stand
+P039,External SSD 1TB,Accessories,110,15,4.3,Portable 1TB external SSD
+P040,Bluetooth Keyboard,Accessories,55,22,4.9,Slim Bluetooth keyboard
+P041,Office Monitor 24,Monitor,160,45,4.6,24-inch Full HD monitor
+P042,Office Monitor 27,Monitor,220,19,4.6,27-inch Full HD monitor
+P043,Pro Monitor 27,Monitor,380,58,4.6,27-inch QHD monitor
+P044,UltraWide 34,Monitor,520,8,4.1,34-inch ultrawide monitor
+P045,Gaming Monitor 27,Monitor,450,7,4.7,27-inch QHD gaming monitor
+P046,Budget Monitor 22,Monitor,120,30,4.1,22-inch Full HD monitor
+P047,Creator Monitor 32,Monitor,650,18,4.8,32-inch 4K monitor
+P048,Portable Monitor 15,Monitor,210,41,4.8,15.6-inch portable Full HD monitor
+P049,Curved Monitor 32,Monitor,430,25,4.0,32-inch curved QHD monitor
+P050,Business Monitor 24,Monitor,180,36,4.2,24-inch Full HD business monitor

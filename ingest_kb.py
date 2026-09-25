@@ -10,7 +10,11 @@ COLLECTION_NAME = "company_kb"
 
 def load_documents():
     documents = []
-    for filename in os.listdir(KB_DIR):
+    if not os.path.exists(KB_DIR):
+        print(f"Directory {KB_DIR} does not exist.")
+        return documents
+
+    for filename in sorted(os.listdir(KB_DIR)):
         if filename.endswith(".pdf"):
             filepath = os.path.join(KB_DIR, filename)
             loader = PyPDFLoader(filepath)
@@ -38,8 +42,11 @@ if __name__ == "__main__":
     docs = load_documents()
     print(f"Loaded {len(docs)} raw document pages")
 
-    chunks = split_documents(docs)
-    print(f"Split into {len(chunks)} chunks")
+    if docs:
+        chunks = split_documents(docs)
+        print(f"Split into {len(chunks)} chunks")
 
-    build_vector_store(chunks)
-    print(f"Vector store saved to {CHROMA_PATH}")
+        build_vector_store(chunks)
+        print(f"Vector store saved to {CHROMA_PATH}")
+    else:
+        print("No PDF documents found to ingest.")

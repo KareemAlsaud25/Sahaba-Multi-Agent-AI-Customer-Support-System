@@ -105,6 +105,7 @@
 
 <script>
   const API_URL = "http://127.0.0.1:8000/chat";
+  const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
 
   const messagesDiv = document.getElementById("messages");
   const userInput = document.getElementById("user-input");
@@ -142,7 +143,10 @@
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message })
+        body: JSON.stringify({
+          message: message,
+          session_id: sessionId
+        })
       });
 
       if (!response.ok) {

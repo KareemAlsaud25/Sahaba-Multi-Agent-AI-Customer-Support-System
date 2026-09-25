@@ -1,11 +1,12 @@
-import pandas as pd
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
-from langchain_openai import ChatOpenAI
-from langchain.tools import tool
-from langchain.agents import create_agent
-from dotenv import load_dotenv
 import os
+import pandas as pd
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain.tools import tool
+from langchain_chroma import Chroma
+from langchain_core.messages import HumanMessage
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
@@ -39,7 +40,11 @@ def search_products(question: str) -> str:
 @tool
 def filter_products(category: str = "", max_price: float = 0, min_rating: float = 0) -> str:
     """Filter products by exact criteria: category (Laptop, Smartphone, Accessories, Monitor, Audio), max_price, and/or min_rating. Leave a field empty/0 to skip that filter."""
-    df = pd.read_csv(PRODUCTS_PATH)
+    target_path = PRODUCTS_PATH if os.path.exists(PRODUCTS_PATH) else "products.csv"
+    if not os.path.exists(target_path):
+        return f"Product database not found at {PRODUCTS_PATH} or products.csv."
+
+    df = pd.read_csv(target_path)
 
     if category:
         df = df[df["category"].str.lower() == category.lower()]
@@ -73,6 +78,8 @@ product_agent = create_agent(
     system_prompt=SYSTEM_PROMPT
 )
 
-def run_product_agent(user_message: str) -> str:
-    result = product_agent.invoke({"messages": [{"role": "user", "content": user_message}]})
+def run_product_agent(user_message: str, history=None) -> str:
+    messages = list(history) if history else []
+    messages.append(HumanMessage(content=user_message))
+    result = product_agent.invoke({"messages": messages})
     return result["messages"][-1].content

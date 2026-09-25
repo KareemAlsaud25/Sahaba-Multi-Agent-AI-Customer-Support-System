@@ -1,14 +1,18 @@
+import os
 import pandas as pd
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
 
 PRODUCTS_PATH = "data/products.csv"
 CHROMA_PATH = "chroma_products"
 COLLECTION_NAME = "products_kb"
 
 def load_products():
-    return pd.read_csv(PRODUCTS_PATH)
+    target_path = PRODUCTS_PATH if os.path.exists(PRODUCTS_PATH) else "products.csv"
+    if not os.path.exists(target_path):
+        raise FileNotFoundError(f"Could not find products CSV at {PRODUCTS_PATH} or products.csv")
+    return pd.read_csv(target_path)
 
 def build_product_documents(df):
     documents = []

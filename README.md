@@ -1,94 +1,30 @@
-[README.md](https://github.com/user-attachments/files/31531094/README.md)
 # TechStore AI Customer Support Multi-Agent System
 
-An AI-powered customer support system for a fictional online electronics store, **TechStore**. The system uses a routing agent to direct customer questions to one of two specialized agents, combining **RAG (Retrieval-Augmented Generation)** for unstructured knowledge with **structured tool calls** for exact data lookups.
+An AI-powered customer support system for a fictional online electronics store, **TechStore**. The system uses a routing agent to direct customer questions to one of two specialized agents, combining **RAG (Retrieval-Augmented Generation)** for unstructured knowledge with **structured tool calls** for exact data lookups, backed by **multi-turn session memory**.
 
 Built as part of the Sahaba AI Internship (Week 7&8: AI Customer Support Multi-Agent System).
 
 ## Architecture
 
-```[README (2).md](https://github.com/user-attachments/files/32653631/README.2.md)
-
-Customer → HTML/CSS/JS Frontend → FastAPI Backend → Routing Agent → Customer Support Agentimport os
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage, AIMessage
-
-from customer_support_agent import run_customer_support_agent
-from product_agent import run_product_agent
-
-load_dotenv()
-
-SESSIONS = {}
-
-def get_session_history(session_id: str):
-    if session_id not in SESSIONS:
-        SESSIONS[session_id] = []
-    return SESSIONS[session_id]
-
-llm = ChatOpenAI(
-    model="openai/gpt-4o-mini",
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    temperature=0
-)
-
-ROUTING_PROMPT = ChatPromptTemplate.from_messages([
-    ("system",
-     "You are a routing classifier for TechStore's customer support system. "
-     "Look at the recent chat history and classify the customer's latest message. "
-     "Reply with exactly one word: 'support' or 'product'. "
-     "'support' covers: company info, policies (return, shipping, warranty, payment), and order status questions. "
-     "'product' covers: product details, specifications, availability, and product recommendations."),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{message}")
-])
-
-routing_chain = ROUTING_PROMPT | llm
-
-def route_message(user_message: str, history) -> str:
-    result = routing_chain.invoke({
-        "history": history[-6:],
-        "message": user_message
-    })
-    decision = result.content.strip().lower()
-    return "product" if "product" in decision else "support"
-
-def handle_message(user_message: str, session_id: str = "default_session") -> dict:
-    history = get_session_history(session_id)
-    agent_used = route_message(user_message, history)
-
-    if agent_used == "product":
-        response = run_product_agent(user_message, history=history[-6:])
-    else:
-        response = run_customer_support_agent(user_message, history=history[-6:])
-
-    history.append(HumanMessage(content=user_message))
-    history.append(AIMessage(content=response))
-
-    return {
-        "agent": agent_used,
-        "response": response
-    }
-                                                                   → Product Agent
+```
+Customer → HTML/CSS/JS Frontend → FastAPI Backend → Routing Agent (w/ History) → Customer Support Agent
+                                                                               → Product Agent
 ```
 
-- **Frontend**: A single-page HTML/CSS/JS chat interface that sends messages to the backend and displays responses, tagged with which agent answered.
-- **Backend**: FastAPI, exposing a single `POST /chat` endpoint.
-- **Routing Agent**: A lightweight LLM classifier that reads the customer's message and decides whether it belongs to the Customer Support Agent or the Product Agent.
-- **Customer Support Agent**: Answers company/policy questions using RAG over 5 policy PDFs, and answers order-status questions using a structured tool that queries `orders.csv` directly.
-- **Product Agent**: Answers product questions and gives recommendations using RAG over `products.csv`, plus a structured filtering tool for exact constraints like price, category, and rating.
+- **Frontend**: A single-page HTML/CSS/JS chat interface that establishes a per-browser `session_id`, communicates with the backend, and tags each response with the agent that answered.
+- **Backend**: FastAPI, exposing a `POST /chat` endpoint handling messages and session states.
+- **Routing Agent**: A context-aware LLM classifier that analyzes both the ongoing conversation window and the latest user prompt to route seamlessly between agents.
+- **Customer Support Agent**: Answers company/policy questions using RAG over 5 policy PDFs, and resolves order status inquiries using direct deterministic tool lookups on `orders.csv`.
+- **Product Agent**: Answers product questions and gives recommendations using RAG over `products.csv`, alongside a structured tool for exact criteria filtering (category, price limit, rating).
+- **Session Memory**: In-memory message store maintaining a sliding context window across turns, enabling seamless follow-up questions and multi-turn dialogues.
 
 ## Key Design Decision: RAG vs. Structured Tool Calls
 
 A core architectural choice in this project is that **order lookups and product filtering are NOT done through RAG.**
 
-- `orders.csv` and `products.csv` contain **structured, exact data** (order IDs, statuses, prices, categories). Retrieving this kind of data via semantic similarity search is the wrong tool for the job — it's approximate by nature and can't reliably guarantee it respects a hard constraint like "price ≤ $600" or return the *exact* record for order `O0001`.
-- Instead, both agents expose **tool functions** (`check_order_status`, `filter_products`) that perform direct, deterministic `pandas` lookups/filters. The LLM decides *when* to call these tools based on the nature of the question, but the actual data retrieval is exact, not embedding-based.
-- RAG is reserved for genuinely unstructured, descriptive content: the 5 policy PDFs (Customer Support Agent) and free-text product descriptions used for descriptive/semantic product search (Product Agent).
-
-This split is intentional and is the main technical distinction this project is built to demonstrate.
+- `orders.csv` and `products.csv` contain **structured, exact data** (order IDs, statuses, prices, categories). Retrieving this kind of data via semantic similarity search is approximate by nature and cannot reliably guarantee exact string matching on non-semantic keys (like `O0001` or `C096`) or strict arithmetic filters (like `price <= 600`).
+- Instead, both agents expose **deterministic tool functions** (`check_order_status`, `list_customer_orders`, `filter_products`) running direct `pandas` queries. The LLM decides *when* to invoke these tools and extracts the relevant parameters, ensuring 100% precision.
+- RAG is reserved for genuinely unstructured, descriptive content: the 5 company policy PDFs (Customer Support Agent) and free-text semantic product descriptions (Product Agent).
 
 ## Tech Stack
 
@@ -115,71 +51,73 @@ This split is intentional and is the main technical distinction this project is 
 │   └── payment_policy.pdf
 ├── ingest_kb.py                 # Builds the company policy Chroma vector store
 ├── order_tool.py                # Structured lookup functions over orders.csv
-├── customer_support_agent.py    # Agent 1: policy RAG + order tool
+├── customer_support_agent.py    # Agent 1: policy RAG + order tool (memory-enabled)
 ├── ingest_products.py           # Builds the product Chroma vector store
-├── product_agent.py             # Agent 2: product RAG + filtering tool
-├── routing_agent.py             # Classifies and routes each message
-├── main.py                      # FastAPI backend (/chat endpoint)
-├── index.html                   # Frontend chat UI
+├── product_agent.py             # Agent 2: product RAG + filtering tool (memory-enabled)
+├── routing_agent.py             # Classifies, manages session memory, and routes
+├── main.py                      # FastAPI backend (/chat endpoint with session tracking)
+├── index.html                   # Frontend chat UI (session-aware)
 ├── requirements.txt
 └── README.md
 ```
 
-Note: the `chroma_kb/` and `chroma_products/` vector store folders, the `venv/` virtual environment, and the `.env` file are **not included** in this repository. They are either rebuildable or environment/secret-specific — see setup steps below.
+> **Note**: Vector store caches (`chroma_kb/`, `chroma_products/`), local environments (`venv/`), and environment secrets (`.env`) are excluded from version control. Run the ingestion scripts to build the local vector stores before launching the API.
 
 ## Setup & Running Locally
 
 **1. Clone the repository and create a virtual environment**
 
-```
+```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1      # Windows PowerShell
 ```
 
 **2. Install dependencies**
 
-```
+```powershell
 pip install -r requirements.txt
 ```
 
-**3. Create a `.env` file** in the project root with your OpenRouter API key:
+**3. Create a `.env` file** in the project root:
 
-```
+```env
 OPENROUTER_API_KEY=your_key_here
 ```
 
 **4. Build the vector databases** (must be run once before starting the server)
 
-```
+```powershell
 python ingest_kb.py
 python ingest_products.py
 ```
 
 **5. Start the backend**
 
-```
+```powershell
 uvicorn main:app --reload
 ```
 
-The API will be available at `http://127.0.0.1:8000`, with interactive docs at `http://127.0.0.1:8000/docs`.
+The API will be available at `http://127.0.0.1:8000`, with interactive documentation at `http://127.0.0.1:8000/docs`.
 
 **6. Open the frontend**
 
-Open `index.html` directly in your browser (double-click it). Make sure the backend from step 5 is still running.
+Open `index.html` directly in your browser. Ensure the FastAPI backend is running.
 
-## Example Questions to Try
+## Example Questions & Multi-Turn Flows
 
-**Customer Support Agent** (policies, company info, order status):
+**Customer Support Agent** (policies, company info, order tracking):
 - "What is your return policy?"
 - "What does the warranty cover?"
 - "What's the status of order O0001?"
+- *Follow-up:* "What is its delivery date?"
 
 **Product Agent** (product info, recommendations):
 - "Can you recommend a laptop under $600?"
+- *Follow-up:* "Does it come with a warranty?" *(Routes contextually across agents)*
 - "Do you have any noise cancelling headphones?"
 - "Show me monitors with a high rating"
 
-## Known Limitations
+## Notes & Production Considerations
 
-- **Stateless conversations**: Each message is processed independently, with no memory of prior turns in the same session. Follow-up questions that rely on earlier context (e.g. "tell me more about the first one") are not supported in the current version. This was a deliberate scope decision for this stage of the project rather than an oversight.
-- **CORS is fully open** (`allow_origins=["*"]`) for local development simplicity. In a production deployment, this should be restricted to the actual frontend's origin.
+- **In-Memory History**: Session histories are stored in an in-memory dictionary keyed by `session_id`. In a multi-worker production environment, this should be backed by an external distributed store like Redis.
+- **CORS Configuration**: CORS is open (`allow_origins=["*"]`) for local testing convenience. Restrict this to the production client origin prior to production deployment.

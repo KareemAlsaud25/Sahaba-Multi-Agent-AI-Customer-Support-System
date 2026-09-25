@@ -3,6 +3,7 @@ from langchain_chroma import Chroma
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
 import os
 
@@ -38,7 +39,7 @@ def search_company_policies(question: str) -> str:
 
 @tool
 def check_order_status(order_id: str) -> str:
-    """Look up the status and details of a single order by its order ID (e.g. O0001)."""
+    """Look up full details of a single order by its order ID (e.g. O0001). Returns all fields: customer, product, quantity, status, order date, delivery date, total amount. Extract only the specific field the customer asked about when answering."""
     return get_order_status(order_id)
 
 @tool
@@ -49,6 +50,7 @@ def list_customer_orders(customer_id: str) -> str:
 SYSTEM_PROMPT = """You are TechStore's customer support agent.
 You answer questions about company policies (returns, shipping, warranty, payment) and company information using the search_company_policies tool.
 You answer questions about order status using check_order_status or list_customer_orders.
+When a customer asks for a specific detail (e.g. just the delivery date, just the quantity), answer with only that detail, not the full order summary, even though the tool returns all fields.
 Only use information returned by your tools. If the tools do not contain the answer, say you don't have that information and suggest the customer contact support@techstore.example.
 Keep answers concise and clear."""
 
@@ -58,6 +60,8 @@ customer_support_agent = create_agent(
     system_prompt=SYSTEM_PROMPT
 )
 
-def run_customer_support_agent(user_message: str) -> str:
-    result = customer_support_agent.invoke({"messages": [{"role": "user", "content": user_message}]})
+def run_customer_support_agent(user_message: str, history=None) -> str:
+    messages = list(history) if history else []
+    messages.append(HumanMessage(content=user_message))
+    result = customer_support_agent.invoke({"messages": messages})
     return result["messages"][-1].content

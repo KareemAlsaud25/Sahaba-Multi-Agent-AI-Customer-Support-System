@@ -15,6 +15,7 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
+    session_id: str = "default_session"
 
 class ChatResponse(BaseModel):
     agent: str
@@ -22,7 +23,7 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-    result = handle_message(request.message)
+    result = handle_message(request.message, session_id=request.session_id)
     return ChatResponse(agent=result["agent"], response=result["response"])
 
 @app.get("/")
